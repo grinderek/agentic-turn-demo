@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from agentic_turn.engine import Engine
-from agentic_turn.models import Answer, Citation, FinalReply, ModelReply, Turn
+from agentic_turn.models import Answer, Citation, FinalReply, ModelReply, ToolCall, Turn
 from agentic_turn.providers import ScriptedProvider
 from agentic_turn.store import Store
 
@@ -120,6 +120,28 @@ async def test_stream_failure_has_error_terminal_and_persisted_text(store):
     turn = await execute(store, BrokenProvider(delay=0))
     assert turn.status == "error" and turn.text == "Already visible."
     assert store.events(turn.id, 0)[-1]["type"] == "error"
+
+
+async def test_text_across_tool_iterations_has_a_persisted_paragraph_boundary(store):
+    class AdjacentTextProvider(ScriptedProvider):
+        async def stream(self, *, step, **kwargs):
+            if step == 0:
+                yield "Looking up the meeting."
+                yield ModelReply(
+                    text="Looking up the meeting.",
+                    calls=[ToolCall("read", "read_source", {"source_id": "mail-001"})],
+                    content=[{"type": "text", "text": "Looking up the meeting."}],
+                    stop_reason="tool_use",
+                )
+            else:
+                yield "Maya proposed 14:00 UTC."
+                yield ModelReply(text="Maya proposed 14:00 UTC.")
+
+    turn = await execute(store, AdjacentTextProvider(delay=0))
+    assert turn.status == "done"
+    assert turn.text == "Looking up the meeting.\n\nMaya proposed 14:00 UTC."
+    deltas = [e["text"] for e in store.events(turn.id, 0) if e["type"] == "delta"]
+    assert "".join(deltas) == store.get_turn(turn.id).text
 
 
 class InvalidCitationsProvider(ScriptedProvider):

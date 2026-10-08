@@ -116,6 +116,7 @@ class Engine:
                 raise UserCancelled
             started = perf_counter()
             reply = None
+            iteration_has_text = False
             stream = self.provider.stream(
                 messages=working,
                 tools=self.tools.definitions(),
@@ -130,6 +131,17 @@ class Engine:
                     except StopAsyncIteration:
                         break
                     if isinstance(part, str):
+                        if part and not iteration_has_text:
+                            # Model calls can end/start without whitespace. A tool hop is a
+                            # paragraph boundary in the visible transcript, not a word join.
+                            if (
+                                turn.text
+                                and not turn.text.endswith("\n")
+                                and not part.startswith("\n")
+                            ):
+                                turn.text += "\n\n"
+                                self.store.emit(turn, "delta", text="\n\n")
+                            iteration_has_text = True
                         turn.text += part
                         self.store.emit(turn, "delta", text=part)
                     else:

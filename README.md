@@ -95,6 +95,9 @@ partial results after failure, timeout, citation repair, iteration limits, owner
 draft revision, duplicate approval, replay, restart recovery and the Anthropic SDK
 adapter through a simulated HTTP stream. Tests make no live API calls.
 
+A separate [live provider check](docs/verification.md) exercised real model calls,
+draft replacement and cancellation with synthetic records.
+
 ## Scope and tradeoffs
 
 - This is a local portfolio application. Demo session tokens isolate conversations;
@@ -107,7 +110,8 @@ adapter through a simulated HTTP stream. Tests make no live API calls.
 - Data is retained in the local SQLite file. Clear `data/` and the browser's site storage
   together to start a fresh demo. No performance claims are inferred from scripted timing.
 
-See [architecture](docs/architecture.md) and [API examples](docs/api.md).
+See [architecture](docs/architecture.md), [API examples](docs/api.md) and
+[verification](docs/verification.md).
 
 SDK implementation references: [FastAPI streaming responses](https://fastapi.tiangolo.com/advanced/custom-response/#streamingresponse),
 [Anthropic streaming](https://platform.claude.com/docs/en/build-with-claude/streaming),

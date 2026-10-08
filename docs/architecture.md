@@ -67,6 +67,8 @@ discard their pending drafts. A duplicate decision returns a conflict.
 
 Read tools return records and their IDs. The runner accumulates IDs in a per-turn ledger.
 Typed finalization supplies an outcome and citations without replacing the visible text.
+Text from successive model calls is separated by a persisted paragraph-break event,
+so narration before tools and the final answer remain readable on replay as well.
 The validator permits only IDs in the ledger; invalid IDs cause at most one repair call,
 then remaining invalid citations are dropped. The original streamed transcript stays intact.
 This checks source existence within the turn. It does not implement semantic fact checking.
