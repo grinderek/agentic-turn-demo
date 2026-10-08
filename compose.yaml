@@ -1,0 +1,13 @@
+services:
+  demo:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-demo}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+    volumes:
+      - demo-data:/app/data
+volumes:
+  demo-data:

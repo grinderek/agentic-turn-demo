@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentic Turn - inspectable AI execution</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <a class="brand" href="/">a<span class="brand-dot">.</span> turn</a>
+        <div class="header-right">
+          <span class="pill"><i></i> Synthetic workspace</span>
+          <a href="/docs" target="_blank" rel="noopener">API docs ↗</a>
+        </div>
+      </header>
+      <main>
+        <section class="hero">
+          <p class="eyebrow">PYTHON / FASTAPI / AGENT EXECUTION</p>
+          <h1>The turn,<br /><span>under control.</span></h1>
+          <p class="intro">
+            Follow an agent from its first tool call to a grounded answer. Stop
+            the stream. Inspect the sources. Approve the next step.
+          </p>
+          <div class="hero-meta">
+            <span id="provider">Connecting...</span
+            ><span>SQLite event replay</span><span>Human approval</span>
+          </div>
+        </section>
+        <div class="workspace">
+          <section class="conversation panel" aria-labelledby="assistant-title">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">01 / CONVERSATION</span>
+                <h2 id="assistant-title">Meeting assistant</h2>
+              </div>
+              <span id="status" class="status">Ready</span>
+            </div>
+            <div class="context">
+              <span class="context-icon">✉</span>
+              <div>
+                <strong>Atlas design review</strong>
+                <p>Demo inbox + calendar / June 2030 / UTC</p>
+              </div>
+            </div>
+            <div id="user-prompt" class="user-prompt" hidden></div>
+            <article id="answer" class="answer">
+              <p class="empty">
+                Run the meeting scenario to see the agent search records, check
+                availability and stage a reply.
+              </p>
+            </article>
+            <div id="citations" class="citations"></div>
+            <div id="actions" class="actions"></div>
+            <div id="error" class="error" role="alert" hidden></div>
+            <form id="form" class="composer">
+              <label for="prompt">Your request</label>
+              <textarea id="prompt" rows="3" maxlength="4000" required>
+Find the Atlas review details, check my calendar and draft a reply confirming the meeting.</textarea
+              >
+              <div class="composer-bottom">
+                <div>
+                  <label class="sr-only" for="scenario">Scenario</label
+                  ><select id="scenario">
+                    <option value="meeting">Meeting + draft</option>
+                    <option value="tool_error">Tool error + recovery</option>
+                    <option value="bad_citation">
+                      Invalid citation + repair
+                    </option>
+                    <option value="budget">Iteration limit</option>
+                  </select>
+                </div>
+                <div class="buttons">
+                  <button id="cancel" class="secondary" type="button" hidden>
+                    Stop turn</button
+                  ><button id="run" type="submit" disabled>
+                    Run turn <span>↗</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+            <p class="footnote">
+              Scripted mode follows a fixed meeting scenario. Draft revisions
+              understand "shorter". Approval records a demo action; no email is
+              sent.
+            </p>
+          </section>
+          <aside class="execution panel" aria-labelledby="trace-title">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">02 / EXECUTION</span>
+                <h2 id="trace-title">Turn timeline</h2>
+              </div>
+              <span id="sequence" class="mono">seq 0</span>
+            </div>
+            <div class="metrics">
+              <div>
+                <span>Model calls</span><strong id="call-count">0</strong>
+              </div>
+              <div>
+                <span>Tool calls</span><strong id="tool-count">0</strong>
+              </div>
+              <div>
+                <span>Source IDs</span><strong id="source-count">0</strong>
+              </div>
+            </div>
+            <div id="trace" class="trace">
+              <p class="empty">
+                Execution events will appear here.<br />Each frame has a turn ID
+                and sequence number.
+              </p>
+            </div>
+            <details class="audit">
+              <summary>Model call audit</summary>
+              <pre id="audit">[]</pre>
+            </details>
+            <div class="invariants">
+              <strong>Built into the runner</strong>
+              <p>
+                Bounded tool loop · Partial answer on cancel · Citation
+                allowlist · Approval gate
+              </p>
+            </div>
+          </aside>
+        </div>
+        <footer>
+          <span>Independent portfolio implementation by Danila Berazhny</span
+          ><a
+            href="https://github.com/grinderek/agentic-turn-demo"
+            target="_blank"
+            rel="noopener"
+            >View source ↗</a
+          >
+        </footer>
+      </main>
+    </div>
+    <dialog id="source-dialog">
+      <div class="dialog-heading">
+        <h2>Source record</h2>
+        <button id="close-source" class="secondary" aria-label="Close source">
+          Close
+        </button>
+      </div>
+      <pre id="source-content"></pre>
+    </dialog>
+  </body>
+</html>
