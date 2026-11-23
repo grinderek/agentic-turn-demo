@@ -184,6 +184,8 @@ class Engine:
                         "source_ids": result.source_ids,
                         "duration_ms": round((perf_counter() - tool_started) * 1000),
                     }
+                    if call.name in {"warehouse_schema", "budget_variance"} and not result.error:
+                        record["warehouse"] = result.content
                     turn.tools.append(record)
                     self.store.emit(turn, "tool", **record)
                     if result.action:

@@ -24,9 +24,27 @@ The default provider remains scripted, and no credential is included in the repo
 
 ## Automated verification
 
-27 tests cover the runner, scoped tools, SQLite persistence, API ownership, cancellation,
+The tests cover the runner, scoped tools, SQLite persistence, API ownership, cancellation,
 timeouts, citation repair, bounded iterations, replay, draft lifecycle and the live SDK
 adapter through simulated HTTP responses. The standard test suite requires no API key.
 
 Run `ruff check .`, `ruff format --check .` and `pytest -q` as described in the README.
 The GitHub Actions workflow runs the suite on Python 3.12 and 3.14.
+
+
+## Finance walkthrough - 2026-11-23
+
+The local FastAPI app was exercised from the browser using the scripted provider.
+The first budget question prompted for a version. Selecting the original plan showed
+Marketing 5,000 planned / 6,300 actual and Cloud 2,000 planned / 2,600 actual.
+The SQL disclosure and turn-scoped citation displayed the calculated rows,
+bound month and version, and local SQLite validation metadata. The existing meeting
+tour staged a synthetic mail draft and accepted the user's approval. The
+[walkthrough](walkthrough.gif) contains captures from these local runs.
+
+The warehouse tests check schema validation, dry-run ordering, byte limits,
+typed parameters, cancellation, ambiguous versions and incomplete or oversized
+results. A separate local contract check exercised google-cloud-bigquery 3.47.0
+with anonymous credentials and a simulated HTTP transport. It verified request
+serialization, DATE and STRING parameters, dry-run flags and NUMERIC result parsing.
+These finance checks ran without contacting or billing a Google Cloud project.

@@ -6,9 +6,27 @@ durable event replay, source validation and a human approval gate.
 Independent portfolio implementation by **Danila Berazhny**, based on engineering
 patterns he worked on in a commercial assistant. The implementation, prompts,
 fixtures and documentation in this repository were created for this demo.
-All emails, identities and calendar records are synthetic.
+The included emails, identities, calendar records and financial figures are synthetic.
 
-![Meeting assistant with an execution timeline](docs/demo.png)
+![Recorded walkthrough of the meeting and budget scenarios on synthetic data](docs/walkthrough.gif)
+
+## Budget question walkthrough
+
+Ask which categories exceeded their October 2030 budget. The assistant reads the
+available versions and asks which plan to compare. Choose **original** or **revised**
+to see the result, its source, bound parameters and SQL. Both answers below come from
+the same synthetic records. The version changes the comparison.
+
+| Category | Actual | Original plan | Over original | Revised plan | Over revised |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Marketing | 6,300 | 5,000 | 1,300 | 6,000 | 300 |
+| Cloud | 2,600 | 2,000 | 600 | 2,500 | 100 |
+
+In the default mode, SQLite executes the parameterized budget query locally. The
+optional BigQuery adapter reads a configured synthetic table or view, runs a Google
+dry run and enforces a bytes-billed limit before executing. The model supplies the
+month and version. The server owns the SQL template, source and execution project.
+[BigQuery setup and data contract](docs/bigquery.md)
 
 ## Run in two minutes
 
@@ -24,9 +42,10 @@ uvicorn agentic_turn.api:app --host 127.0.0.1 --port 8000 --workers 1
 
 On Windows, activate with `.venv\Scripts\Activate.ps1` instead.
 Open **http://localhost:8000**. API documentation is at **http://localhost:8000/docs**.
+Open <http://localhost:8000/?scenario=finance> in a fresh session for the budget walkthrough.
 Default mode uses a scripted provider and requires **no API key**. It executes the
 same runner, tools, persistence, cancellation and approval paths as the live adapter.
-The script always follows the Atlas meeting scenario; free-form requests require live mode.
+Choose **Meeting + draft** for Atlas or **BigQuery budget analysis** for finance. Free-form tool selection requires live model mode.
 
 Or use Docker:
 
@@ -106,7 +125,7 @@ draft replacement and cancellation with synthetic records.
   Multiple workers would need a shared queue, distributed locks and a cancellation channel.
 - Restarting the process marks unfinished turns `interrupted`, preserves partial text
   and discards their drafts. It does not pretend to resume a lost provider stream.
-- Approval operates on a synthetic outbox. There are no Gmail, calendar, finance or voice integrations.
+- Mail and calendar tools use fixtures. Approval writes only to a synthetic outbox. The finance tool supports local fixtures or an explicitly configured BigQuery demo source. Voice, Google login, Plaid and QuickBooks are outside this portfolio example.
 - Data is retained in the local SQLite file. Clear `data/` and the browser's site storage
   together to start a fresh demo. No performance claims are inferred from scripted timing.
 

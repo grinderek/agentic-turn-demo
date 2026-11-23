@@ -529,3 +529,25 @@ dialog::backdrop {
     max-width: 150px;
   }
 }
+
+.finance-result {
+  margin: 0 26px 18px;
+  overflow-x: auto;
+}
+.finance-result table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-variant-numeric: tabular-nums;
+}
+.finance-result th, .finance-result td {
+  padding: 8px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.finance-result th:first-child, .finance-result td:first-child {
+  text-align: left;
+}
+.finance-result details {
+  margin-top: 12px;
+}

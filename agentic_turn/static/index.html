@@ -13,7 +13,7 @@
       <header>
         <a class="brand" href="/">a<span class="brand-dot">.</span> turn</a>
         <div class="header-right">
-          <span class="pill"><i></i> Synthetic workspace</span>
+          <span class="pill"><i></i> Demo workspace</span>
           <a href="/docs" target="_blank" rel="noopener">API docs ↗</a>
         </div>
       </header>
@@ -34,16 +34,16 @@
           <section class="conversation panel" aria-labelledby="assistant-title">
             <div class="panel-heading">
               <div>
-                <span class="eyebrow">01 / CONVERSATION</span>
+                <span class="eyebrow">CONVERSATION</span>
                 <h2 id="assistant-title">Meeting assistant</h2>
               </div>
               <span id="status" class="status">Ready</span>
             </div>
             <div class="context">
-              <span class="context-icon">✉</span>
+              <span id="context-icon" class="context-icon">✉</span>
               <div>
-                <strong>Atlas design review</strong>
-                <p>Demo inbox + calendar / June 2030 / UTC</p>
+                <strong id="context-name">Atlas design review</strong>
+                <p id="context-info">Demo inbox + calendar / June 2030 / UTC</p>
               </div>
             </div>
             <div id="user-prompt" class="user-prompt" hidden></div>
@@ -53,6 +53,7 @@
                 availability and stage a reply.
               </p>
             </article>
+            <section id="finance-result" class="finance-result" aria-label="Budget analysis" hidden></section>
             <div id="citations" class="citations"></div>
             <div id="actions" class="actions"></div>
             <div id="error" class="error" role="alert" hidden></div>
@@ -66,6 +67,7 @@ Find the Atlas review details, check my calendar and draft a reply confirming th
                   <label class="sr-only" for="scenario">Scenario</label
                   ><select id="scenario">
                     <option value="meeting">Meeting + draft</option>
+                    <option value="finance">BigQuery budget analysis</option>
                     <option value="tool_error">Tool error + recovery</option>
                     <option value="bad_citation">
                       Invalid citation + repair
@@ -83,15 +85,14 @@ Find the Atlas review details, check my calendar and draft a reply confirming th
               </div>
             </form>
             <p class="footnote">
-              Scripted mode follows a fixed meeting scenario. Draft revisions
-              understand "shorter". Approval records a demo action; no email is
-              sent.
+              Choose a scenario to run it without an API key. Meeting approvals
+              write to the demo outbox.
             </p>
           </section>
           <aside class="execution panel" aria-labelledby="trace-title">
             <div class="panel-heading">
               <div>
-                <span class="eyebrow">02 / EXECUTION</span>
+                <span class="eyebrow">EXECUTION</span>
                 <h2 id="trace-title">Turn timeline</h2>
               </div>
               <span id="sequence" class="mono">seq 0</span>

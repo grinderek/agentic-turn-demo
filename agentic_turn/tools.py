@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .models import ToolResult, Turn
 from .store import Conflict, Store
+from .warehouse import Warehouse
 
 EMAILS = [
     {
@@ -82,7 +83,25 @@ class DraftArgs(Args):
     supersedes_action_id: str | None = None
 
 
+class WarehouseArgs(Args):
+    month: str = Field(pattern=r"^\d{4}-\d{2}(?:-01)?$")
+
+
+class VarianceArgs(WarehouseArgs):
+    version: str | None = Field(default=None, min_length=1, max_length=100)
+
+
 SCHEMAS = {
+    "warehouse_schema": (
+        WarehouseArgs,
+        "Inspect the configured financial warehouse schema and budget versions for a month.",
+    ),
+    "budget_variance": (
+        VarianceArgs,
+        "Calculate overspending by category using a bounded read-only SQL template. "
+        "If multiple versions exist, ask the user to select one before calculating. "
+        "Read schema first. Month uses YYYY-MM. Never infer a budget version.",
+    ),
     "search_emails": (SearchArgs, "Search your synthetic inbox by words in subject or body."),
     "list_calendar": (CalendarArgs, "List your synthetic events on an ISO date (YYYY-MM-DD)."),
     "read_source": (ReadArgs, "Read one synthetic email or event by its source ID."),
@@ -103,6 +122,9 @@ class Context:
 
 
 class Tools:
+    def __init__(self, warehouse: Warehouse | None = None):
+        self.warehouse = warehouse or Warehouse.from_env()
+
     def definitions(self) -> list[dict[str, Any]]:
         return [
             {"name": name, "description": desc, "input_schema": schema.model_json_schema()}
@@ -114,6 +136,14 @@ class Tools:
             return ToolResult({"error": "unknown_tool"}, error=True)
         try:
             args = SCHEMAS[name][0].model_validate(arguments)
+            if isinstance(args, WarehouseArgs):
+                if context.tenant != "demo":
+                    return ToolResult({"error": "warehouse_not_available"}, error=True)
+                if isinstance(args, VarianceArgs):
+                    result = await self.warehouse.query(args.month, args.version)
+                else:
+                    result = await self.warehouse.describe(args.month)
+                return ToolResult(result, source_ids=[result["source_id"]])
             records = [r for r in EMAILS + CALENDAR if r["tenant"] == context.tenant]
             if isinstance(args, SearchArgs):
                 words = args.query.casefold().split()

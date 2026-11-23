@@ -47,6 +47,7 @@ function status(value) {
   $("status").dataset.status = value;
   $("run").disabled = state.running;
   $("cancel").hidden = !state.running;
+  $("scenario").disabled = state.running;
 }
 function counters() {
   $("sequence").textContent = `seq ${state.seq}`;
@@ -110,7 +111,7 @@ function citations(items) {
     button.addEventListener("click", async () => {
       try {
         $("source-content").textContent = JSON.stringify(
-          await json("/api/sources/" + encodeURIComponent(item.source_id)),
+          await json(`/api/turns/${state.tid}/sources/${encodeURIComponent(item.source_id)}`),
           null,
           2,
         );
@@ -122,6 +123,81 @@ function citations(items) {
     $("citations").append(button);
   }
 }
+const meetingPrompt = $("prompt").value.trim();
+const financePrompt = "Which categories were over budget in October 2030, and by how much?";
+
+function scenarioContext(scenario) {
+  const finance = scenario === "finance";
+  $("assistant-title").textContent = finance ? "Budget analyst" : "Meeting assistant";
+  $("context-icon").textContent = finance ? "Σ" : "✉";
+  $("context-name").textContent = finance ? "Budget variance" : "Atlas design review";
+  $("context-info").textContent = finance ? "Finance warehouse / monthly plan and actuals" : "Demo inbox + calendar / June 2030 / UTC";
+  $("prompt").value = finance ? financePrompt : meetingPrompt;
+}
+
+function financeResult(outcome) {
+  const panel = $("finance-result");
+  panel.replaceChildren();
+  const report = state.tools.findLast((tool) => tool.warehouse)?.warehouse;
+  panel.hidden = !report;
+  if (!report) return;
+
+  if (outcome === "needs_clarification" && report.versions?.length) {
+    const choices = node("div", "buttons");
+    for (const version of report.versions) {
+      const button = node("button", "secondary", version);
+      button.type = "button";
+      button.addEventListener("click", () => {
+        $("prompt").value = `Use the ${version} budget for ${report.period}.`;
+        $("form").requestSubmit();
+      });
+      choices.append(button);
+    }
+    panel.append(choices);
+  }
+
+  if (report.status !== "answered" || !Array.isArray(report.rows)) return;
+  panel.append(node("strong", "", `${report.period} / ${report.version}`));
+  if (report.rows.length) {
+    const table = node("table");
+    const header = table.createTHead().insertRow();
+    for (const label of ["Category", "Plan", "Actual", "Over budget"])
+      header.append(node("th", "", label));
+    const body = table.createTBody();
+    for (const record of report.rows) {
+      const row = body.insertRow();
+      for (const key of ["category", "planned", "actual", "delta"])
+        row.insertCell().textContent = record[key];
+    }
+    panel.append(table);
+  } else panel.append(node("p", "", "No categories exceeded the selected budget."));
+  const details = node("details");
+  details.append(node("summary", "", "Inspect SQL and source"),
+    node("pre", "", report.sql),
+    node("pre", "", JSON.stringify({
+      source: report.source, backend: report.backend, parameters: report.parameters, dry_run: report.dry_run
+    }, null, 2)));
+  panel.append(details);
+}
+
+$("scenario").addEventListener("change", () => {
+  scenarioContext($("scenario").value);
+  $("finance-result").hidden = true;
+  $("citations").replaceChildren();
+  $("answer").textContent = "";
+  $("user-prompt").hidden = true;
+  $("error").hidden = true;
+  $("actions").replaceChildren();
+  $("trace").replaceChildren();
+  state.seq = 0;
+  state.calls = [];
+  state.tools = [];
+  state.sources.clear();
+  state.traceSeq.clear();
+  counters();
+  status("ready");
+});
+
 function drafts() {
   $("actions").replaceChildren();
   for (const action of state.actions
@@ -199,6 +275,7 @@ function frame(event) {
     $("answer").textContent = event.text;
     status("done");
     citations(event.citations);
+    financeResult(event.outcome);
     drafts();
   }
   if (["cancelled", "error"].includes(event.type)) {
@@ -214,6 +291,8 @@ function frame(event) {
 }
 async function restore() {
   const saved = await json("/api/turns/" + state.tid);
+  $("scenario").value = saved.scenario;
+  scenarioContext(saved.scenario);
   state.seq = saved.seq;
   state.calls = saved.calls;
   state.tools = saved.tools;
@@ -224,6 +303,7 @@ async function restore() {
   $("user-prompt").hidden = false;
   status(saved.status);
   citations(saved.citations);
+  financeResult(saved.outcome);
   drafts();
   counters();
   if (saved.reason) error(saved.reason.replaceAll("_", " "));
@@ -302,6 +382,7 @@ $("form").addEventListener("submit", async (event) => {
     state.sources.clear();
     state.traceSeq.clear();
     $("answer").textContent = "";
+    $("finance-result").hidden = true;
     $("trace").replaceChildren();
     $("citations").replaceChildren();
     $("user-prompt").textContent = $("prompt").value;
@@ -334,7 +415,9 @@ async function init() {
         ? "Scripted demo / no API key"
         : "Live model / " + health.provider;
     if (health.provider !== "scripted-demo") {
-      $("scenario").disabled = true;
+      for (const option of Array.from($("scenario").options)) {
+        if (!["meeting", "finance"].includes(option.value)) option.remove();
+      }
       document.querySelector(".footnote").textContent =
         "Live model mode. Approval records a demo action; no email is sent.";
     }
@@ -353,7 +436,13 @@ async function init() {
       localStorage.setItem("turn-latest", state.tid);
       await restore();
       void subscribe(0);
-    } else status("ready");
+    } else {
+      if (new URLSearchParams(location.search).get("scenario") === "finance")
+        $("scenario").value = "finance";
+      scenarioContext($("scenario").value);
+      if ($("scenario").value === "finance") $("answer").textContent = "";
+      status("ready");
+    }
   } catch (e) {
     error(
       e.message +

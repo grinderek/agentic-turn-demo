@@ -67,7 +67,13 @@ def create_app(store: Store | None = None, provider: Provider | None = None) -> 
 
     @app.get("/api/health")
     async def health():
-        return {"status": "ok", "provider": provider.name, "synthetic_data": True}
+        warehouse_mode = engine.tools.warehouse.backend
+        return {
+            "status": "ok",
+            "provider": provider.name,
+            "warehouse": warehouse_mode,
+            "synthetic_data": warehouse_mode == "synthetic",
+        }
 
     @app.post("/api/sessions", status_code=201)
     async def new_session():
@@ -147,6 +153,16 @@ def create_app(store: Store | None = None, provider: Provider | None = None) -> 
                 "X-Accel-Buffering": "no",
             },
         )
+
+    @app.get("/api/turns/{tid}/sources/{sid}")
+    async def turn_source(tid: str, sid: str, owner: Owner):
+        turn = owned_turn(tid, owner)
+        if sid not in turn.ledger:
+            raise HTTPException(404, "Source not found")
+        for record in reversed(turn.tools):
+            if sid in record["source_ids"] and "warehouse" in record:
+                return record["warehouse"]
+        return await source(sid, owner)
 
     @app.get("/api/sources/{sid}")
     async def source(sid: str, owner: Owner):

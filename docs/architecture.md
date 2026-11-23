@@ -45,6 +45,13 @@ sequenceDiagram
 - `static/` is a small dependency-free browser client. It renders model and record text
   with `textContent`, reconciles snapshots and ignores replayed deltas.
 
+The finance tools resolve one operator-selected source per server. The scripted provider
+and Anthropic adapter use the same schema and budget-variance tools. The server binds typed
+month and version parameters to fixed SELECT statements. A finance tool event and its
+snapshot retain the report displayed to that session, including SQL, version and source.
+Opening the citation reads the owned turn snapshot without repeating a warehouse query.
+See [BigQuery](bigquery.md) for cloud execution and local fixture behavior.
+
 ## Lifecycle
 
 `running -> done | cancelled | error | interrupted`

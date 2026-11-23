@@ -117,3 +117,30 @@ async def test_independent_conversations_can_run_concurrently(client):
     t1, t2 = await asyncio.gather(wait_done(app, r1.json()["id"]), wait_done(app, r2.json()["id"]))
     assert t1.status == t2.status == "done"
     assert t1.id != t2.id
+
+
+async def test_budget_result_and_citation_are_scoped_to_the_calculation(client):
+    http, app = client
+    headers, cid = await identity(http)
+    other, _ = await identity(http)
+    route = f"/api/conversations/{cid}/turns"
+    snapshots = []
+    for version in ("original", "revised"):
+        reply = await http.post(
+            route,
+            headers=headers,
+            json={"scenario": "finance", "prompt": f"Use the {version} budget for 2030-10"},
+        )
+        tid = reply.json()["id"]
+        await wait_done(app, tid)
+        saved = (await http.get(f"/api/turns/{tid}", headers=headers)).json()
+        snapshots.append(saved)
+
+    for turn, delta in zip(snapshots, ("1300", "300"), strict=True):
+        report = turn["tools"][-1]["warehouse"]
+        sid = turn["citations"][0]["source_id"]
+        url = f"/api/turns/{turn['id']}/sources/{sid}"
+        assert report["rows"][0]["delta"] == delta
+        assert (await http.get(url, headers=headers)).json() == report
+        assert (await http.get(url, headers=other)).status_code == 404
+        assert (await http.get(url.replace(sid, "mail-001"), headers=headers)).status_code == 404

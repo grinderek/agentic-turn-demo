@@ -57,7 +57,7 @@ class Turn(BaseModel):
     id: str = Field(default_factory=new_id)
     conversation_id: str
     prompt: str
-    scenario: Literal["meeting", "tool_error", "bad_citation", "budget"] = "meeting"
+    scenario: Literal["meeting", "tool_error", "bad_citation", "budget", "finance"] = "meeting"
     status: Literal["running", "done", "cancelled", "error", "interrupted"] = "running"
     text: str = ""
     seq: int = 0
@@ -72,4 +72,4 @@ class Turn(BaseModel):
 class TurnRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(min_length=1, max_length=4000)
-    scenario: Literal["meeting", "tool_error", "bad_citation", "budget"] = "meeting"
+    scenario: Literal["meeting", "tool_error", "bad_citation", "budget", "finance"] = "meeting"

@@ -57,3 +57,22 @@ citations and current conversation actions. Browser reconnects use both snapshot
 event replay. A browser uses streaming `fetch` rather than `EventSource` to send the
 session header. Unauthorized ownership returns 404; active-turn and action conflicts
 return 409. Invalid payloads return 422.
+
+## Finance walkthrough
+
+In the same conversation, submit these bodies to the turns endpoint. Wait for the
+first turn to finish before submitting the second.
+
+```json
+{"scenario":"finance","prompt":"Which categories were over budget in October 2030?"}
+```
+
+```json
+{"scenario":"finance","prompt":"Use the original budget for 2030-10."}
+```
+
+The first outcome is `needs_clarification`. The second is `answered`. Its
+`budget_variance` tool frame and snapshot entry contain a `warehouse` object with
+rows, period, version, source, SQL, typed parameters and validation metadata.
+For either tour, `GET /api/turns/{tid}/sources/{sid}` resolves a citation surfaced
+in that turn and requires the owning session header.
